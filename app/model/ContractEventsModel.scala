@@ -4,6 +4,6 @@ import java.util.Date
 
 object ContractEventsModel {
 
-  final case class ContractEvent(date: Date, payoff: Double)
+  final case class ContractCashFlows(data: Map[Date, Double])
 
 }

@@ -6,7 +6,7 @@ object ContractTermsModel {
   
   final case class  Cycle(n: Int, p: Int, stub: String)
   
-  case class ScheduleConfig(calendar: List[Date], includeEndDay: Boolean, eomc: String, bdc: String)
+  final case class ScheduleConfig(calendar: List[Date], includeEndDay: Boolean, eomc: String, bdc: String)
   
   final case class ContractTerms(
     contractId: String
