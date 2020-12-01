@@ -11,8 +11,8 @@ object ContractTermsModel {
   final case class ContractTerms(
     contractId: String
   , contractType : Option[String]
-  , ct_IED       : String 
-  , ct_SD        : String 
+  , ct_IED       : Date
+  , ct_SD        : Date
   , ct_MD        : Option[Date] 
   , ct_TD        : Option[Date]
   , ct_PRNXT     : Option[Double]
