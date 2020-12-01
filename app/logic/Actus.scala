@@ -1,6 +1,5 @@
 package logic
 
-import java.text.SimpleDateFormat
 import java.time.{LocalDateTime, ZoneId}
 import java.util
 import java.util.{ArrayList, Date, Set}
@@ -19,6 +18,7 @@ import scala.jdk.CollectionConverters._
 object Actus {
 
   val defaultZoneId = ZoneId.systemDefault()
+
   def render(dt: Date) = dt.formatted("dd/MM/yyyy")
   def render(cl: Cycle) = "1Y"
   def render(v: Double) = v.toString
@@ -37,27 +37,27 @@ object Actus {
     "cycleAnchorDateOfInterestPayment" -> ct.ct_IPANX.map(render).orNull,
     "cycleOfInterestPayment" -> ct.ct_IPCL.map(render).orNull,
     "nominalInterestRate" -> ct.ct_IPNR.map(render).orNull,
-    "dayCountConvention" -> null,
+    "dayCountConvention" -> ct.ct_DCC,
     "accruedInterest" -> ct.ct_IPAC.map(render).orNull,
     "capitalizationEndDate" -> ct.ct_IPCED.map(render).orNull,
-    "cyclePointOfInterestPayment" -> null,
+    "cyclePointOfInterestPayment" -> "B", //TODO IPPNT
     "currency" -> "ADA",
     "initialExchangeDate" -> render(ct.ct_IED),
     "premiumDiscountAtIED" -> render(ct.ct_PDIED),
     "notionalPrincipal" -> ct.ct_NT.map(render).orNull,
     "purchaseDate" -> ct.ct_PRD.map(render).orNull,
-    "priceAtPurchaseDate" -> null,
+    "priceAtPurchaseDate" -> ct.ct_PPRD.map(render).orNull,
     "terminationDate" -> ct.ct_TD.map(render).orNull,
-    "priceAtTerminationDate" -> null,
+    "priceAtTerminationDate" -> null, //TODO PTD
     "marketObjectCodeOfScalingIndex" -> "SCALE1",
-    "scalingIndexAtContractDealDate" -> null,
+    "scalingIndexAtContractDealDate" -> render(ct.ct_SCIED),
     "notionalScalingMultiplier" -> null,
     "interestScalingMultiplier" -> null,
-    "cycleAnchorDateOfScalingIndex" -> null,
-    "cycleOfScalingIndex" -> null,
-    "scalingEffect" -> null,
-    "cycleAnchorDateOfOptionality" -> null,
-    "cycleOfOptionality" -> null,
+    "cycleAnchorDateOfScalingIndex" -> ct.ct_SCANX.map(render).orNull,
+    "cycleOfScalingIndex" -> ct.ct_SCCL.map(render).orNull,
+    "scalingEffect" -> ct.ct_SCEF,
+    "cycleAnchorDateOfOptionality" -> ct.ct_OPANX.map(render).orNull,
+    "cycleOfOptionality" -> ct.ct_OPCL.map(render).orNull,
     "penaltyType" -> ct.ct_PYTP,
     "penaltyRate" -> render(ct.ct_PYRT),
     "objectCodeOfPrepaymentModel" -> "CODE007",
@@ -67,13 +67,13 @@ object Actus {
     "marketObjectCodeOfRateReset" -> "CODE007",
     "lifeCap" -> render(ct.ct_RRLC),
     "lifeFloor" -> render(ct.ct_RRLF),
-    "periodCap" -> null,
-    "periodFloor" -> null,
-    "cyclePointOfRateReset" -> null,
+    "periodCap" -> render(ct.ct_RRPC),
+    "periodFloor" -> render(ct.ct_RRPF),
+    "cyclePointOfRateReset" -> null, //TODO RRPNT
     "fixingPeriod" -> null,
-    "nextResetRate" -> null,
-    "rateMultiplier" -> null,
-    "maturityDate" -> null
+    "nextResetRate" -> ct.ct_RRNXT.map(render).orNull,
+    "rateMultiplier" -> render(ct.ct_RRMLT),
+    "maturityDate" -> ct.ct_MD.map(render).orNull
   )
 
   def runActus(contractTerms: ContractTerms, riskFactors: Map[String, Map[Date, Double]]): ContractCashFlows = {
