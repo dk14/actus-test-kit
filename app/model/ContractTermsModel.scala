@@ -2,9 +2,12 @@ package model
 
 import java.util.Date
 
+import ai.x.play.json.{BaseNameEncoder, Jsonx, NameEncoder}
+import play.api.libs.json.{Json, OFormat}
+
 object ContractTermsModel {
   
-  final case class  Cycle(n: Int, p: Int, stub: String)
+  final case class Cycle(n: Int, p: Int, stub: String)
   
   final case class ScheduleConfig(calendar: List[Date], includeEndDay: Boolean, eomc: String, bdc: String)
   
@@ -62,5 +65,16 @@ object ContractTermsModel {
   , ct_FEB       : String
   , ct_FER       : Double
   )
+
+  case class ModelInput(ct: ContractTerms, rf: Map[String, Map[String, Double]])
+
+  object ModelInput {
+    import play.api.data.format.Formats.dateFormat
+    implicit val cycleFormat: OFormat[Cycle] = Json.format[Cycle]
+    implicit val scfgFormat: OFormat[ScheduleConfig] = Json.format[ScheduleConfig]
+    implicit val encoder: NameEncoder = BaseNameEncoder.apply()
+    implicit val ctFormat: OFormat[ContractTerms] = Jsonx.formatCaseClass[ContractTerms]
+    implicit val cyclemodelFormat: OFormat[ModelInput] = Json.format[ModelInput]
+  }
 
 }

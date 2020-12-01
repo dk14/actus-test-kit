@@ -19,9 +19,9 @@ object Actus {
 
   val defaultZoneId = ZoneId.systemDefault()
 
-  def render(dt: Date) = dt.formatted("dd/MM/yyyy")
-  def render(cl: Cycle) = "1Y"
-  def render(v: Double) = v.toString
+  private def render(dt: Date) = dt.formatted("dd/MM/yyyy")
+  private def render(cl: Cycle) = "1Y"
+  private def render(v: Double) = v.toString
 
   def extractAttributes(ct: ContractTerms): Map[String, String] = Map( //Map[String, AnyRef] for SWAPS, Map[String, String] for others
     "contractType" -> ct.contractType.get,
@@ -76,7 +76,7 @@ object Actus {
     "maturityDate" -> ct.ct_MD.map(render).orNull
   )
 
-  def runActus(contractTerms: ContractTerms, riskFactors: Map[String, Map[Date, Double]]): ContractCashFlows = {
+  def runActus(contractTerms: ContractTerms, riskFactors: Map[String, Map[String, Double]]): ContractCashFlows = {
     def convertDate(date: LocalDateTime) = Date.from(date.toLocalDate.atStartOfDay(defaultZoneId).toInstant())
     def convertToLocalDate(date: Date) = date.toInstant.atZone(defaultZoneId).toLocalDateTime
     //def parseDate(date: String) = new SimpleDateFormat("dd/MM/yyyy").parse(date)
@@ -84,16 +84,18 @@ object Actus {
     val model = new ContractModel(attributes.asJava)
     val events = ContractType.schedule(convertToLocalDate(contractTerms.ct_MD.getOrElse(contractTerms.ct_TD.get)), model)
 
-    val riskFactors = new RiskFactorModelProvider() {
+    val riskFactorsProvider = new RiskFactorModelProvider() {
       override def keys: util.Set[String] = null
 
       override def stateAt(id: String,
                            time: LocalDateTime,
                            states: StateSpace,
-                           attributes: ContractModelProvider): Double = riskFactors(id)(convertDate(time))
+                           attributes: ContractModelProvider): Double = riskFactors(id)(render(convertDate(time)))
     }
 
-    val eventsWithPayoffs = ContractType.apply(events, model, riskFactors).asScala.map(e => convertDate(e.eventTime()) -> e.payoff())
+    val eventsWithPayoffs = ContractType
+      .apply(events, model, riskFactorsProvider)
+      .asScala.map(e => render(convertDate(e.eventTime())) -> e.payoff())
     ContractCashFlows(eventsWithPayoffs.toMap)
   }
 

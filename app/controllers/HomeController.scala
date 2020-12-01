@@ -1,7 +1,11 @@
 package controllers
 
 import javax.inject._
+import logic.Actus
+import model.ContractEventsModel.ContractCashFlows
+import model.ContractTermsModel.ModelInput
 import play.api._
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 
 /**
@@ -22,5 +26,9 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents) e
     Ok(views.html.index())
   }
 
-  def actus(): Action[]
+  def actus() = Action { implicit request =>
+    val input = Json.fromJson[ModelInput](request.body.asJson.get).get
+    val output = Actus.runActus(input.ct, input.rf)
+    Ok(Json.toJson(output))
+  }
 }
