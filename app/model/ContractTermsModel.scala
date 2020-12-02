@@ -74,7 +74,7 @@ object ContractTermsModel {
     implicit val scfgFormat: OFormat[ScheduleConfig] = Json.format[ScheduleConfig]
     implicit val encoder: NameEncoder = BaseNameEncoder.apply()
     implicit val ctFormat: OFormat[ContractTerms] = Jsonx.formatCaseClass[ContractTerms]
-    implicit val cyclemodelFormat: OFormat[ModelInput] = Json.format[ModelInput]
+    implicit val modelFormat: OFormat[ModelInput] = Json.format[ModelInput]
   }
 
 }

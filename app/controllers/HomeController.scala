@@ -27,7 +27,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents) e
   }
 
   def actus() = Action { implicit request =>
-    val input = Json.fromJson[ModelInput](request.body.asJson.get).get
+    val input = Json.fromJson[ModelInput](request.body.asJson.get).fold(x => sys.error(x.toString()), identity)
     val output = Actus.runActus(input.ct, input.rf)
     Ok(Json.toJson(output))
   }

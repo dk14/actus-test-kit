@@ -1,8 +1,10 @@
 package logic
 
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, ZoneId}
 import java.util
-import java.util.{ArrayList, Date, Set}
+import java.util.{ArrayList, Date, Set => JavaSet}
 
 import model.ContractEventsModel.ContractCashFlows
 import model.ContractTermsModel.{ContractTerms, Cycle}
@@ -18,26 +20,39 @@ import scala.jdk.CollectionConverters._
 object Actus {
 
   val defaultZoneId = ZoneId.systemDefault()
+  val outputFormat = new SimpleDateFormat("dd/MM/yyyy")
 
-  private def render(dt: Date) = dt.formatted("dd/MM/yyyy")
+  private def render(dt: Date) =
+    DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(dt.toInstant.atZone(defaultZoneId))
   private def render(cl: Cycle) = "1Y"
   private def render(v: Double) = v.toString
+
+  private def adjustHaskellEnum(haskell: String) = haskell.replaceAll("^.*?_", "")
+
+  private def adjustDayCount(haskell: String) = haskell match {
+    case "DCC_A_AISDA" => "AA"
+    case "DCC_A_360"   => "A360"
+    case "DCC_A_365"   => "A365"
+    case "DCC_E30_360ISDA" => "30E360ISDA"
+    case "DCC_E30_360" => "30E360"
+    case "DCC_B_252" => "B252"
+  }
 
   def extractAttributes(ct: ContractTerms): Map[String, String] = Map( //Map[String, AnyRef] for SWAPS, Map[String, String] for others
     "contractType" -> ct.contractType.get,
     "contractID" -> "0",
     "statusDate" -> render(ct.ct_SD),
-    "contractRole" -> ct.ct_CNTRL,
-    "CounterpartyID" -> "0",
-    "CycleAnchorDateOfFee" -> ct.ct_FEANX.map(render).orNull,
+    "contractRole" -> adjustHaskellEnum(ct.ct_CNTRL),
+    "counterpartyID" -> "0",
+    "cycleAnchorDateOfFee" -> ct.ct_FEANX.map(render).orNull,
     "cycleOfFee" -> ct.ct_FECL.map(render).orNull,
-    "feeBasis" -> ct.ct_FEB,
+    "feeBasis" -> adjustHaskellEnum(ct.ct_FEB),
     "feeRate" -> render(ct.ct_FER),
     "feeAccrued" -> ct.ct_FEAC.map(render).orNull,
     "cycleAnchorDateOfInterestPayment" -> ct.ct_IPANX.map(render).orNull,
     "cycleOfInterestPayment" -> ct.ct_IPCL.map(render).orNull,
     "nominalInterestRate" -> ct.ct_IPNR.map(render).orNull,
-    "dayCountConvention" -> ct.ct_DCC,
+    "dayCountConvention" -> adjustDayCount(ct.ct_DCC),
     "accruedInterest" -> ct.ct_IPAC.map(render).orNull,
     "capitalizationEndDate" -> ct.ct_IPCED.map(render).orNull,
     "cyclePointOfInterestPayment" -> "B", //TODO IPPNT
@@ -55,10 +70,10 @@ object Actus {
     "interestScalingMultiplier" -> null,
     "cycleAnchorDateOfScalingIndex" -> ct.ct_SCANX.map(render).orNull,
     "cycleOfScalingIndex" -> ct.ct_SCCL.map(render).orNull,
-    "scalingEffect" -> ct.ct_SCEF,
+    "scalingEffect" -> adjustHaskellEnum(ct.ct_SCEF).replaceAll("0", "O"),
     "cycleAnchorDateOfOptionality" -> ct.ct_OPANX.map(render).orNull,
     "cycleOfOptionality" -> ct.ct_OPCL.map(render).orNull,
-    "penaltyType" -> ct.ct_PYTP,
+    "penaltyType" -> adjustHaskellEnum(ct.ct_PYTP),
     "penaltyRate" -> render(ct.ct_PYRT),
     "objectCodeOfPrepaymentModel" -> "CODE007",
     "cycleAnchorDateOfRateReset" -> ct.ct_RRANX.map(render).orNull,
@@ -74,18 +89,19 @@ object Actus {
     "nextResetRate" -> ct.ct_RRNXT.map(render).orNull,
     "rateMultiplier" -> render(ct.ct_RRMLT),
     "maturityDate" -> ct.ct_MD.map(render).orNull
-  )
+  ).view.mapValues(v => if (v == null) "NULL" else v).toMap
 
   def runActus(contractTerms: ContractTerms, riskFactors: Map[String, Map[String, Double]]): ContractCashFlows = {
     def convertDate(date: LocalDateTime) = Date.from(date.toLocalDate.atStartOfDay(defaultZoneId).toInstant())
     def convertToLocalDate(date: Date) = date.toInstant.atZone(defaultZoneId).toLocalDateTime
     //def parseDate(date: String) = new SimpleDateFormat("dd/MM/yyyy").parse(date)
     val attributes = extractAttributes(contractTerms).toMap[String, AnyRef]
-    val model = new ContractModel(attributes.asJava)
+    println(attributes)
+    val model = ContractModel.parse(attributes.asJava)
     val events = ContractType.schedule(convertToLocalDate(contractTerms.ct_MD.getOrElse(contractTerms.ct_TD.get)), model)
 
     val riskFactorsProvider = new RiskFactorModelProvider() {
-      override def keys: util.Set[String] = null
+      override def keys: util.Set[String] = Set.empty[String].asJava
 
       override def stateAt(id: String,
                            time: LocalDateTime,
