@@ -7,7 +7,7 @@ import play.api.libs.json.{Json, OFormat}
 
 object ContractTermsModel {
   
-  final case class Cycle(n: Int, p: Int, stub: String)
+  final case class Cycle(n: Int, p: String, stub: String)
   
   final case class ScheduleConfig(calendar: List[Date], includeEndDay: Boolean, eomc: String, bdc: String)
   

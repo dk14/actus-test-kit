@@ -6,7 +6,7 @@ import java.time.{LocalDateTime, ZoneId}
 import java.util
 import java.util.{ArrayList, Date, Set => JavaSet}
 
-import model.ContractEventsModel.ContractCashFlows
+import model.ContractEventsModel.{ContractCashFlows, Payoff}
 import model.ContractTermsModel.{ContractTerms, Cycle}
 import org.actus.attributes.{ContractModel, ContractModelProvider}
 import org.actus.contracts.ContractType
@@ -24,7 +24,7 @@ object Actus {
 
   private def render(dt: Date) =
     DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(dt.toInstant.atZone(defaultZoneId))
-  private def render(cl: Cycle) = "1Y"
+  private def render(cl: Cycle) = "P" + cl.n + adjustHaskellEnum(cl.p) + (if (cl.stub == "ShortStub") "0" else "1")
   private def render(v: Double) = v.toString
 
   private def adjustHaskellEnum(haskell: String) = haskell.replaceAll("^.*?_", "")
@@ -111,7 +111,7 @@ object Actus {
 
     val eventsWithPayoffs = ContractType
       .apply(events, model, riskFactorsProvider)
-      .asScala.map(e => render(convertDate(e.eventTime())) -> e.payoff())
+      .asScala.map(e => render(convertDate(e.eventTime())) -> Payoff(e.eventType().toString, e.payoff()))
     ContractCashFlows(eventsWithPayoffs.toMap)
   }
 
