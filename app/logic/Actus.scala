@@ -24,7 +24,7 @@ object Actus {
 
   private def render(dt: Date) =
     DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(dt.toInstant.atZone(defaultZoneId))
-  private def render(cl: Cycle) = "P" + cl.n + adjustHaskellEnum(cl.p) + (if (cl.stub == "ShortStub") "0" else "1")
+  private def render(cl: Cycle) = "P" + cl.n + adjustHaskellEnum(cl.p) + "L" + (if (cl.stub == "ShortStub") "0" else "1")
   private def render(v: Double) = v.toString
 
   private def adjustHaskellEnum(haskell: String) = haskell.replaceAll("^.*?_", "")
