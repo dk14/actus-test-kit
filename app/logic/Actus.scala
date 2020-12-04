@@ -64,7 +64,7 @@ object Actus {
     "priceAtPurchaseDate" -> ct.ct_PPRD.map(render).orNull,
     "terminationDate" -> ct.ct_TD.map(render).orNull,
     "priceAtTerminationDate" -> null, //TODO PTD
-    "marketObjectCodeOfScalingIndex" -> "SCALE1",
+    "marketObjectCodeOfScalingIndex" -> "o_rf_SCMO",
     "scalingIndexAtContractDealDate" -> render(ct.ct_SCIED),
     "notionalScalingMultiplier" -> null,
     "interestScalingMultiplier" -> null,
@@ -75,11 +75,11 @@ object Actus {
     "cycleOfOptionality" -> ct.ct_OPCL.map(render).orNull,
     "penaltyType" -> adjustHaskellEnum(ct.ct_PYTP),
     "penaltyRate" -> render(ct.ct_PYRT),
-    "objectCodeOfPrepaymentModel" -> "CODE007",
+    "objectCodeOfPrepaymentModel" -> "pp_payoff",
     "cycleAnchorDateOfRateReset" -> ct.ct_RRANX.map(render).orNull,
     "cycleOfRateReset" -> ct.ct_RRCL.map(render).orNull,
     "rateSpread" -> render(ct.ct_RRSP),
-    "marketObjectCodeOfRateReset" -> "CODE007",
+    "marketObjectCodeOfRateReset" -> "o_rf_RRMO",
     "lifeCap" -> render(ct.ct_RRLC),
     "lifeFloor" -> render(ct.ct_RRLF),
     "periodCap" -> render(ct.ct_RRPC),
@@ -101,8 +101,9 @@ object Actus {
     val events = ContractType.schedule(convertToLocalDate(contractTerms.ct_MD.getOrElse(contractTerms.ct_TD.get)), model)
 
     val riskFactorsProvider = new RiskFactorModelProvider() {
-      override def keys: util.Set[String] = Set.empty[String].asJava
+      override def keys: util.Set[String] = Set("o_rf_CURS", "o_rf_RRMO", "o_rf_SCMO", "pp_payoff").asJava
 
+      //TODO currency/settlement currency -> o_rf_CURS
       override def stateAt(id: String,
                            time: LocalDateTime,
                            states: StateSpace,
