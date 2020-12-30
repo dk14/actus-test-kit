@@ -8,7 +8,7 @@ object ContractEventsModel {
 
   final case class Payoff(event: String, payoff: Double)
 
-  final case class ContractCashFlows(data: Map[String, Payoff])
+  final case class ContractCashFlows(cfs: Map[String, Payoff])
   
   object ContractCashFlows {
     import play.api.data.format.Formats.dateFormat
