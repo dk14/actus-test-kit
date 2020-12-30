@@ -7,7 +7,7 @@ import java.util
 import java.util.{ArrayList, Date, Set => JavaSet}
 
 import model.ContractEventsModel.{ContractCashFlows, Payoff}
-import model.ContractTermsModel.{ContractTerms, Cycle}
+import model.ContractTermsModel.{ContractTerms, Cycle, RiskFactors}
 import org.actus.attributes.{ContractModel, ContractModelProvider}
 import org.actus.contracts.ContractType
 import org.actus.externals.RiskFactorModelProvider
@@ -91,7 +91,7 @@ object Actus {
     "maturityDate" -> ct.ct_MD.map(render).orNull
   ).view.mapValues(v => if (v == null) "NULL" else v).toMap
 
-  def runActus(contractTerms: ContractTerms, riskFactors: Map[String, Map[String, Double]]): ContractCashFlows = {
+  def runActus(contractTerms: ContractTerms, riskFactors: Map[String, RiskFactors]): ContractCashFlows = {
     def convertDate(date: LocalDateTime) = Date.from(date.toLocalDate.atStartOfDay(defaultZoneId).toInstant())
     def convertToLocalDate(date: Date) = date.toInstant.atZone(defaultZoneId).toLocalDateTime
     //def parseDate(date: String) = new SimpleDateFormat("dd/MM/yyyy").parse(date)
@@ -107,7 +107,15 @@ object Actus {
       override def stateAt(id: String,
                            time: LocalDateTime,
                            states: StateSpace,
-                           attributes: ContractModelProvider): Double = riskFactors(id)(render(convertDate(time)))
+                           attributes: ContractModelProvider): Double = {
+        val rf = riskFactors(render(convertDate(time)))
+        id match {
+          case "o_rf_CURS" => rf.o_rf_CURS
+          case "o_rf_RRMO" => rf.o_rf_RRMO
+          case "o_rf_SCMO" => rf.o_rf_SCMO
+          case "pp_payoff" => rf.pp_payoff
+        }
+      }
     }
 
     val eventsWithPayoffs = ContractType

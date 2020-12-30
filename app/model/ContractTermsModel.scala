@@ -66,7 +66,9 @@ object ContractTermsModel {
   , ct_FER       : Double
   )
 
-  case class ModelInput(ct: ContractTerms, rf: Map[String, Map[String, Double]])
+  final case class RiskFactors(o_rf_CURS: Double, o_rf_RRMO: Double, o_rf_SCMO: Double, pp_payoff: Double)
+
+  case class ModelInput(ct: ContractTerms, rf: Map[String, RiskFactors])
 
   object ModelInput {
     import play.api.data.format.Formats.dateFormat
@@ -74,6 +76,7 @@ object ContractTermsModel {
     implicit val scfgFormat: OFormat[ScheduleConfig] = Json.format[ScheduleConfig]
     implicit val encoder: NameEncoder = BaseNameEncoder.apply()
     implicit val ctFormat: OFormat[ContractTerms] = Jsonx.formatCaseClass[ContractTerms]
+    implicit val rfFormat: OFormat[RiskFactors] = Json.format[RiskFactors]
     implicit val modelFormat: OFormat[ModelInput] = Json.format[ModelInput]
   }
 
